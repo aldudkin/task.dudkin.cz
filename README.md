@@ -11,7 +11,7 @@
 S předpokladem 5 TB denně z AWS Frankfurt → internet, čistě egress podle [AWS kalkulačky](https://calculator.aws/#/createCalculator/ec2-enhancement):
 - Internet: 150 TB/měsíc = 11 571,20 USD
 
-Fakticky to znemožňuje smysluplné použití Cloudflare R2 či jiné cloudové služby — uložení a zpracování dat je potřeba dělat v AWS.
+V praxi to znamená, že přesouvat data do Cloudflare R2 nebo jiné mimo-AWS služby se ekonomicky nevyplatí — data je nutné ukládat i zpracovávat přímo v AWS.
 
 - Za předpokladu, že všechna data zpracováváme uvnitř jednoho AWS regionu, k developerovi poteče jen vyrenderovaný výsledek (malý zlomek zpracovaných dat).
 
