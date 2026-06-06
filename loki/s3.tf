@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "loki" {
-  bucket = var.loki_s3_bucket_name
+  bucket = var.loki-s3-bucket-name
 }
 
 # https://registry.terraform.io/providers/-/aws/5.10.0/docs/resources/s3_bucket_public_access_block

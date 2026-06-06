@@ -36,6 +36,11 @@ Klíčové rozlišení v AWS pricingu:
 
 OpenSearch má navíc inverted index (pro full-text), který Loki nepočítá → menší storage i ingest compute, cenou je scan za běhu místo předpočítaných struktur — *stále splňuje zadání*.
 
+#### Loki deploy mode
+
+> The simple scalable deployment mode can scale close to a TB of logs per day. [zdroj](https://grafana.com/docs/loki/latest/get-started/deployment-modes/)
+
+At 5 TB/day, microservices mode is needed.
 
 #### Mapování požadavků na řešení
 

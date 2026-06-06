@@ -16,11 +16,6 @@ variable "loki-iam-role-name" {
   default     = "loki-iam-role"
 }
 
-variable "loki-grafana-http-namespace-name" {
-  description = "Name of the ECS namespace"
-  default     = "loki-grafana-http-namespace"
-}
-
 variable "admin_cidr" {
   description = "Trusted subnet"
   type        = string
