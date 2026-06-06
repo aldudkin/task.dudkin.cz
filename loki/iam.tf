@@ -55,3 +55,24 @@ resource "aws_iam_role_policy_attachment" "loki-iam-role-attach" {
   policy_arn = aws_iam_policy.loki-iam-policy.arn
 }
 
+##### ECS Image pulling + Cloudwatch logs  #####
+
+resource "aws_iam_role" "ecs" {
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "test-attach" {
+  role       = aws_iam_role.ecs.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
