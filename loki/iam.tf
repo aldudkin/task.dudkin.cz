@@ -7,7 +7,7 @@ data "aws_iam_policy_document" "loki-iam-policy" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.loki_s3_bucket_name}",
+      "arn:aws:s3:::${var.loki-s3-bucket-name}",
     ]
   }
 
@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "loki-iam-policy" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.loki_s3_bucket_name}/*"
+      "arn:aws:s3:::${var.loki-s3-bucket-name}/*"
     ]
   }
 }
