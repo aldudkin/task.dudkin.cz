@@ -1,4 +1,4 @@
-variable "loki_s3_bucket_name" {
+variable "loki-s3-bucket-name" {
   description = "Name of the Loki chunk/index bucket"
   type        = string
   default     = "loki-data-366112400496-eu-central-1"
@@ -16,9 +16,14 @@ variable "loki-iam-role-name" {
   default     = "loki-iam-role"
 }
 
+variable "loki-grafana-http-namespace-name" {
+  description = "Name of the ECS namespace"
+  default     = "loki-grafana-http-namespace"
+}
+
 variable "admin_cidr" {
   description = "Trusted subnet"
   type        = string
   # Intentionally open to the internet for demo access; protected by nginx basic auth
-  default     = "0.0.0.0/0"
+  default = "0.0.0.0/0"
 }

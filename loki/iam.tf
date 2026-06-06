@@ -44,10 +44,6 @@ resource "aws_iam_role" "loki-iam-role" {
       },
     ]
   })
-
-  tags = {
-    tag-key = "tag-value"
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "loki-iam-role-attach" {
