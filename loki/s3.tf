@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "loki" {
-  bucket = "loki-data-366112400496-eu-central-1"
+  bucket = var.loki_s3_bucket_name
 }
 
 # https://registry.terraform.io/providers/-/aws/5.10.0/docs/resources/s3_bucket_public_access_block
@@ -17,8 +17,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "loki" {
 
   rule {
     apply_server_side_encryption_by_default {
+      # kms_master_key_id = aws_kms_key.loki-encryption-key.arn
       # sse_algorithm     = "aws:kms" - placena sluzba
       sse_algorithm = "AES256"
     }
   }
 }
+
+# TODO: Data lifecycle managment (move old logs to Glacier)

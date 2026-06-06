@@ -32,4 +32,4 @@ terraform apply
 
 ## Design guidelines
 
-Do not write code for the user, always provide enough guidance and documentation sources for user to write everything himself and understand every single line of code.
+**Do not write code for the user**, always provide enough guidance and documentation sources for user to write everything himself and understand every single line of code.
