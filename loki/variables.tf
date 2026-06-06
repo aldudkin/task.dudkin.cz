@@ -15,3 +15,10 @@ variable "loki-iam-role-name" {
   type        = string
   default     = "loki-iam-role"
 }
+
+variable "admin_cidr" {
+  description = "Trusted subnet"
+  type        = string
+  # Intentionally open to the internet for demo access; protected by nginx basic auth
+  default     = "0.0.0.0/0"
+}

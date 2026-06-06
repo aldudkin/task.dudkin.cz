@@ -33,3 +33,4 @@ terraform apply
 ## Design guidelines
 
 **Do not write code for the user**, always provide enough guidance and documentation sources for user to write everything himself and understand every single line of code.
+Try not to use acronyms when explaining AWS concepts. When you are using new concept for the first time, like ENI - always explain it. Assume no prior AWS knowledge.
