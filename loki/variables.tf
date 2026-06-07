@@ -61,3 +61,14 @@ variable "grafana_acm_certificate_arn" {
   type    = string
   default = "arn:aws:acm:eu-central-1:366112400496:certificate/4e2d5142-c48d-4d91-aa45-dd61c7f6f9e8"
 }
+
+# FireLens demo (ECS log collection via Fluent Bit sidecar).
+variable "aws-fluentbit-image" {
+  type    = string
+  default = "amazon/aws-for-fluent-bit:stable" # bundles the Loki output plugin
+}
+
+variable "aws-flog-image" {
+  type    = string
+  default = "mingrammer/flog:0.4.3"
+}
