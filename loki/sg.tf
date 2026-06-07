@@ -46,10 +46,11 @@ resource "aws_security_group" "grafana" {
 resource "aws_vpc_security_group_ingress_rule" "grafana-http" {
   security_group_id = aws_security_group.grafana.id
   ip_protocol       = "tcp"
-  cidr_ipv4         = var.admin_cidr
-  # Not source and destination but "range" of ports
-  from_port = 80
-  to_port   = 80
+  # Only the ALB reaches Grafana now (browser -> ALB:3000 -> here). Grafana
+  # listens on 3000 (non-root container can't bind <1024).
+  referenced_security_group_id = aws_security_group.loki-alb.id
+  from_port                    = 3000
+  to_port                      = 3000
 }
 
 # Probably won't work with fargate tasks anyway but harmless
@@ -132,6 +133,15 @@ resource "aws_vpc_security_group_ingress_rule" "loki-internal-from-gateway" {
   security_group_id            = aws_security_group.loki-internal.id
   referenced_security_group_id = aws_security_group.loki-nginx-gateway.id
   ip_protocol                  = "-1"
+}
+
+# Let Grafana query the read path directly (Grafana -> query-frontend :3100).
+resource "aws_vpc_security_group_ingress_rule" "loki-internal-from-grafana" {
+  security_group_id            = aws_security_group.loki-internal.id
+  referenced_security_group_id = aws_security_group.grafana.id
+  ip_protocol                  = "tcp"
+  from_port                    = 3100
+  to_port                      = 3100
 }
 
 resource "aws_vpc_security_group_egress_rule" "loki-egress" {

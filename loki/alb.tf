@@ -15,7 +15,20 @@ resource "aws_lb_listener" "loki-alb-listener" {
   load_balancer_arn = aws_lb.loki-alb.arn
   port              = 80
   protocol          = "HTTP"
-  default_action {
+  default_action { # Catch-all rule
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "loki-api" {
+  listener_arn = aws_lb_listener.loki-alb-listener.arn
+  priority     = 100 # The lower the number the higher the priority is
+
+  condition {
+    path_pattern { values = ["/loki/*", "/otlp/*"] }
+  }
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.loki-nginx-gateway-target-group.arn
   }

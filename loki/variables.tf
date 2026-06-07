@@ -42,3 +42,15 @@ variable "busybox-image" {
   type    = string
   default = "busybox:1.37"
 }
+
+variable "aws-grafana-image" {
+  type    = string
+  default = "grafana/grafana:11.4.0"
+}
+
+# aws ssm put-parameter --name /loki/grafana-admin-password --type SecureString --value 'VALUE' --region eu-central-1
+# aws ssm describe-parameters --region eu-central-1
+variable "grafana_admin_password_ssm_name" {
+  type    = string
+  default = "/loki/grafana-admin-password"
+}

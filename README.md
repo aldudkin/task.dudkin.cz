@@ -97,3 +97,14 @@ Výpočet nezahrnuje EC2 Instance Savings Plans, které nabízejí hlubší slev
 |---|---|---|---|---|
 | SSE-KMS | Uživatel (vlastní KMS klíč) | druhý zámek (`kms:Decrypt`) + audit v CloudTrail + revokace pro compliance + S3 admin nemůže číst data| ano (klíč ~$1/měs + per-request volání) | Suboptimální |
 | SSE-S3 (AES256) | AWS, automaticky a skrytě | Chrání at-rest; transparentní — každý, kdo má `s3:GetObject`, čte | ne | **Optimální pro podmínky ze zadání**|
+
+#### SSM Secrets
+
+```shell
+aws ssm put-parameter --name /loki/grafana-admin-password \
+  --type SecureString --value 'VALUE' --region eu-central-1
+```
+
+```shell
+aws ssm describe-parameters --region eu-central-1
+```
