@@ -145,7 +145,7 @@ See [testing scenarios](test-scenarios/README.md) for more example setups and qu
 ├── tf-bootstrap/     # Terraform pro S3 bucket s remote state (local state, aplikuje se jednou)
 ├── loki/             # Hlavní Terraform modul – veškerá infrastruktura (S3 backend)
 ├── config/           # loki-config.yml – sdílená konfigurace všech Loki komponent
-├── docs/             # Návrh, analýza a zadání (task.md)
+├── docs/             # zadání (task.md)
 ├── mermaid/          # Diagramy architektury (.mmd: data flow, ECS/networking)
 ├── test-scenarios/   # Manuální ověřovací scénáře (health, push/query, flush, externí agent)
 ├── README.md         # Tento návrhový dokument
