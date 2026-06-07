@@ -14,6 +14,7 @@ including data creation (push/query) and durable storage (flush to S3).
 | 01 | [01-service-health.md](01-service-health.md) | All components running, ALB target healthy, no errors |
 | 02 | [02-push-and-query.md](02-push-and-query.md) | Write path + read path (data creation round-trip) |
 | 03 | [03-force-flush-s3.md](03-force-flush-s3.md) | Ingester flush → chunk persisted to S3 |
+| 04 | [04-external-agent.md](04-external-agent.md) | Non-AWS Linux box + Grafana Alloy steadily shipping logs over the internet |
 
 ## Shared setup
 

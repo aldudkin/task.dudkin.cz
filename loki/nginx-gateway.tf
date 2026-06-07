@@ -10,6 +10,8 @@
 
 # This file was mainly written by Claude
 
+# TODO: Implement AUTH for connecting agents
+
 locals {
   gateway_nginx_conf = <<-EOT
     # Re-resolve upstream names at REQUEST time, not startup. Two reasons:
