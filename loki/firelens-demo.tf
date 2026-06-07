@@ -76,7 +76,7 @@ resource "aws_ecs_task_definition" "firelens-demo" {
           host = "loki-distributor.loki.internal"
           port = "3100"
           # No "uri" option: the loki plugin always pushes to /loki/api/v1/push.
-          labels      = "job=ecs-firelens, source=ecs"
+          labels      = "job=ecs-firelens, source=ecs" # Used as a selector in LogQL; Are indexed (log text itself wont be)
           label_keys  = "$container_name"
           line_format = "key_value"
         }
