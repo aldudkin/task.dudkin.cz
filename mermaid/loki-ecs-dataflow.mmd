@@ -1,0 +1,72 @@
+%% Loki on ECS Fargate — security-group boundaries + data flow
+%% Entry: ALB (HTTP :80) -> nginx gateway (:8080) -> components (:3100)
+%% Source of truth: config/loki-config.yml, loki/sg.tf
+%% Ports: 3100 = client-facing + internal HTTP | 9095 = inter-component gRPC | 7946 = memberlist gossip (TCP+UDP)
+flowchart TB
+    %% ===== Outside AWS / public =====
+    subgraph NET["Internet"]
+        AG["Log agents<br/>Fluent Bit · Grafana Alloy"]
+        DEV["Developer browser<br/>(Grafana UI)"]
+    end
+
+    %% ===== SG: loki-alb (NEW) =====
+    subgraph SGALB["SG: loki-alb (NEW)"]
+        ALB["Application Load Balancer<br/>HTTP listener :80<br/>(TLS = prod follow-up, needs domain)"]
+    end
+
+    %% ===== SG: grafana =====
+    subgraph SGGRAF["SG: grafana"]
+        GRAF["Grafana task<br/>:80 (LogQL UI)"]
+    end
+
+    %% ===== SG: loki-gateway =====
+    subgraph SGGW["SG: loki-gateway"]
+        GW["nginx gateway task<br/>:8080 — routes read vs write"]
+    end
+
+    %% ===== SG: loki-internal (the mesh) =====
+    subgraph SGINT["SG: loki-internal — self-rule covers :3100 / :9095 / :7946 (TCP+UDP)"]
+        DIST["distributor :3100"]
+        ING["ingester :9095"]
+        QF["query-frontend :3100"]
+        QS["query-scheduler :9095"]
+        QR["querier"]
+        IG["index-gateway :9095"]
+        COMP["compactor :3100"]
+    end
+
+    S3[("Amazon S3<br/>chunks + TSDB index")]
+
+    %% ----- entry: agents + dev -----
+    AG -->|"POST /push :80"| ALB
+    DEV -->|":80 (direct, admin_cidr)"| GRAF
+
+    %% ----- ALB -> gateway (NEW rules) -----
+    ALB -->|":8080 — NEW: gw ingress from alb"| GW
+
+    %% ----- Grafana -> gateway (existing rule) -----
+    GRAF -->|":8080 — existing rule"| GW
+
+    %% ----- gateway -> components (NEW rules) -----
+    GW -->|"write :3100 — NEW: internal ingress from gw"| DIST
+    GW -->|"read :3100 — NEW: internal ingress from gw"| QF
+
+    %% ----- internal mesh (self-rule, already covered) -----
+    DIST -->|"gRPC :9095"| ING
+    QF -->|"gRPC :9095"| QS
+    QR -->|"pull :9095"| QS
+    QR -->|"recent :9095"| ING
+    QR -->|"index :9095"| IG
+
+    %% ----- storage -----
+    ING -->|"flush chunks+index"| S3
+    QR -->|"old chunks"| S3
+    IG -->|"read index"| S3
+    COMP -->|"compact + retention"| S3
+
+    classDef nw fill:#fff4e5,stroke:#e8920c;
+    classDef s3 fill:#e8f0fe,stroke:#4285f4;
+    classDef newsg fill:#e6f4ea,stroke:#34a853;
+    class AG,DEV nw;
+    class S3 s3;
+    class ALB newsg;

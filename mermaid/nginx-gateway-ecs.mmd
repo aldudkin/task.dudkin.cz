@@ -1,0 +1,41 @@
+%% nginx-gateway.tf -- ECS cluster + networking view
+%% Resources: aws_ecs_cluster (ecs.tf) + aws_cloudwatch_log_group + aws_ecs_task_definition + aws_ecs_service
+flowchart TB
+    DH["Docker Hub<br/>nginxinc/nginx-unprivileged:1.27-alpine"]
+    TG["ALB target group<br/>loki-gateway-target-group :8080<br/>(from alb.tf)"]
+    CW["CloudWatch Log Group<br/>/ecs/loki-gateway (7d)"]
+    DNS["VPC DNS resolver<br/>169.254.169.253"]
+
+    subgraph CLUSTER["aws_ecs_cluster: loki-grafana"]
+        subgraph SVC["aws_ecs_service: loki-nginx-gateway — launch_type FARGATE, desired_count 1"]
+            TD["aws_ecs_task_definition: loki-gateway<br/>cpu 256 / mem 512 · network_mode awsvpc<br/>execution_role_arn = ecs (pull image + logs)"]
+            subgraph TASK["Fargate task (awsvpc) = its own ENI"]
+                ENI["ENI<br/>private IP + public IP (assign_public_ip=true)<br/>SG: loki-gateway"]
+                CON["container 'gateway'<br/>nginx listen :8080<br/>writes conf from $NGINX_CONF"]
+            end
+        end
+    end
+
+    subgraph SUBNETS["network_configuration.subnets = default VPC (3 AZs)"]
+        AZA["subnet eu-central-1a"]
+        AZB["subnet eu-central-1b"]
+        AZC["subnet eu-central-1c"]
+    end
+
+    UP["upstreams (not deployed yet)<br/>loki-distributor.loki.internal:3100<br/>loki-query-frontend.loki.internal:3100"]
+
+    TD -->|"blueprint for"| CON
+    CON --- ENI
+    ENI -.->|"placed in one of"| SUBNETS
+
+    DH -->|"image pull via public IP"| CON
+    CON -->|"stdout/stderr (awslogs)"| CW
+    SVC -->|"registers task IP :8080"| TG
+
+    CON -->|"resolve *.loki.internal :53"| DNS
+    CON -->|"proxy :3100 (502 until they exist)"| UP
+
+    classDef ext fill:#fff4e5,stroke:#e8920c;
+    classDef net fill:#e8f0fe,stroke:#4285f4;
+    class DH,TG,CW,DNS,UP ext;
+    class AZA,AZB,AZC net;

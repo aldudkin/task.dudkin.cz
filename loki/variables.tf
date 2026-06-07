@@ -22,3 +22,13 @@ variable "admin_cidr" {
   # Intentionally open to the internet for demo access; protected by nginx basic auth
   default = "0.0.0.0/0"
 }
+
+variable "aws-default-region" {
+  type    = string
+  default = "eu-central-1"
+}
+
+variable "aws-nginx-image" {
+  type    = string
+  default = "nginxinc/nginx-unprivileged:1.27-alpine"
+}

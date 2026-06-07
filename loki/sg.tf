@@ -72,15 +72,15 @@ resource "aws_vpc_security_group_egress_rule" "grafana-out" {
 # loki-gateway  --  nginx reverse proxy (read/write routing)
 ##################################################
 
-resource "aws_security_group" "loki-gateway" {
-  name        = "loki-gateway"
+resource "aws_security_group" "loki-nginx-gateway" {
+  name        = "loki-nginx-gateway"
   description = "Loki gateway SG"
   vpc_id      = data.aws_vpc.default.id
 }
 
 # Accept the ALB (the log agents' write/read path).
 resource "aws_vpc_security_group_ingress_rule" "loki-gateway-from-alb" {
-  security_group_id            = aws_security_group.loki-gateway.id
+  security_group_id            = aws_security_group.loki-nginx-gateway.id
   referenced_security_group_id = aws_security_group.loki-alb.id
   ip_protocol                  = "tcp"
   from_port                    = 8080
@@ -89,7 +89,7 @@ resource "aws_vpc_security_group_ingress_rule" "loki-gateway-from-alb" {
 
 # Accept Grafana directly (its LogQL queries go straight to the gateway).
 resource "aws_vpc_security_group_ingress_rule" "loki-http" {
-  security_group_id = aws_security_group.loki-gateway.id
+  security_group_id = aws_security_group.loki-nginx-gateway.id
   ip_protocol       = "tcp"
 
   # Allow grafana dynamically
@@ -102,7 +102,7 @@ resource "aws_vpc_security_group_ingress_rule" "loki-http" {
 
 # Harmless allow all egress
 resource "aws_vpc_security_group_egress_rule" "loki-gateway-egress" {
-  security_group_id = aws_security_group.loki-gateway.id
+  security_group_id = aws_security_group.loki-nginx-gateway.id
   ip_protocol       = "-1"
   cidr_ipv4         = "0.0.0.0/0"
   description       = "Allow all egress"
@@ -130,7 +130,7 @@ resource "aws_vpc_security_group_ingress_rule" "loki-internal-self" {
 # TODO: tighten to least privilege (tcp/3100 only?).
 resource "aws_vpc_security_group_ingress_rule" "loki-internal-from-gateway" {
   security_group_id            = aws_security_group.loki-internal.id
-  referenced_security_group_id = aws_security_group.loki-gateway.id
+  referenced_security_group_id = aws_security_group.loki-nginx-gateway.id
   ip_protocol                  = "-1"
 }
 

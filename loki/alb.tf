@@ -1,5 +1,5 @@
 # internet :80  ->  aws_lb.loki-alb  ->  aws_lb_listener (:80, forward)
-# -> aws_lb_target_group.loki-gateway-target-group (:8080)  ->  [nginx gateway tasks]
+# -> aws_lb_target_group.loki-nginx-gateway-target-group (:8080)  ->  [nginx gateway tasks]
 
 
 resource "aws_lb" "loki-alb" {
@@ -17,12 +17,12 @@ resource "aws_lb_listener" "loki-alb-listener" {
   protocol          = "HTTP"
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.loki-gateway-target-group.arn
+    target_group_arn = aws_lb_target_group.loki-nginx-gateway-target-group.arn
   }
 }
 
-resource "aws_lb_target_group" "loki-gateway-target-group" {
-  name        = "loki-gateway-target-group"
+resource "aws_lb_target_group" "loki-nginx-gateway-target-group" {
+  name        = "loki-nginx-gateway-target-group"
   port        = 8080 # the port on the TARGET the ALB connects TO
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
