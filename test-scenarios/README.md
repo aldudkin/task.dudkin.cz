@@ -15,6 +15,7 @@ including data creation (push/query) and durable storage (flush to S3).
 | 02 | [02-push-and-query.md](02-push-and-query.md) | Write path + read path (data creation round-trip) |
 | 03 | [03-force-flush-s3.md](03-force-flush-s3.md) | Ingester flush → chunk persisted to S3 |
 | 04 | [04-external-agent.md](04-external-agent.md) | Non-AWS Linux box + Grafana Alloy steadily shipping logs over the internet |
+| 05 | [05-logcli-time-search.md](05-logcli-time-search.md) | logcli: CLI access, cross-source search, time-indexed (TSDB) query pruning |
 
 ## Shared setup
 
