@@ -47,26 +47,57 @@ resource "aws_ecs_task_definition" "loki" {
   execution_role_arn       = aws_iam_role.ecs.arn           # pull image + write logs
   task_role_arn            = aws_iam_role.loki-iam-role.arn # runtime S3 access
 
-  container_definitions = jsonencode([{
-    name        = "loki-${each.key}"
-    image       = var.aws-loki-image
-    essential   = true
-    command     = ["sh", "-c", "printf '%s' \"$LOKI_CONFIG\" > /tmp/loki.yaml && exec /usr/bin/loki -config.file=/tmp/loki.yaml -target=${each.key}"]
-    environment = [{ name = "LOKI_CONFIG", value = file("${path.module}/../config/loki-config.yml") }]
-    portMappings = [
-      { containerPort = 3100, protocol = "tcp" }, # HTTP
-      { containerPort = 9095, protocol = "tcp" }, # gRPC
-      { containerPort = 7946, protocol = "tcp" }, # memberlist
-    ]
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.loki[each.key].name
-        "awslogs-region"        = var.aws-default-region
-        "awslogs-stream-prefix" = "loki-${each.key}"
+  # Scratch volume shared between the two containers in this task.
+  # No host/EFS config = an ephemeral Fargate volume, gone when the task stops.
+  volume {
+    name = "config"
+  }
+
+  container_definitions = jsonencode([
+    {
+      # One-time sidecar container to inject config file during terraform apply
+      name      = "config-init"
+      image     = var.busybox-image
+      essential = false
+      # Config must be written inside /shared as two containers do not share the same root FS
+      command     = ["sh", "-c", "printf '%s' \"$LOKI_CONFIG\" > /shared/loki.yaml"]
+      environment = [{ name = "LOKI_CONFIG", value = file("${path.module}/../config/loki-config.yml") }]
+      mountPoints = [{ sourceVolume = "config", containerPath = "/shared", readOnly = false }]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.loki[each.key].name
+          "awslogs-region"        = var.aws-default-region
+          "awslogs-stream-prefix" = "config-init"
+        }
+      }
+    },
+    {
+      # Set entryPoint + command explicitly so the flags definitely reach loki
+      # (relying on the image ENTRYPOINT to absorb `command` proved unreliable).
+      name        = "loki-${each.key}"
+      image       = var.aws-loki-image
+      essential   = true
+      entryPoint  = ["/usr/bin/loki"]
+      command     = ["-config.file=/shared/loki.yaml", "-target=${each.key}"]
+      mountPoints = [{ sourceVolume = "config", containerPath = "/shared", readOnly = true }]
+      # Wait until config-init has written the file and exited 0.
+      dependsOn = [{ containerName = "config-init", condition = "SUCCESS" }]
+      portMappings = [
+        { containerPort = 3100, protocol = "tcp" }, # HTTP
+        { containerPort = 9095, protocol = "tcp" }, # gRPC
+        { containerPort = 7946, protocol = "tcp" }, # memberlist
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.loki[each.key].name
+          "awslogs-region"        = var.aws-default-region
+          "awslogs-stream-prefix" = "loki-${each.key}"
+        }
       }
     }
-  }])
+  ])
 }
 
 # One service per component (runs it, wears the mesh SG, registers in Cloud Map).

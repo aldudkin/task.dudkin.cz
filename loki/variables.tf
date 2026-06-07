@@ -37,3 +37,8 @@ variable "aws-loki-image" {
   type    = string
   default = "grafana/loki:3.7.2"
 }
+
+variable "busybox-image" {
+  type    = string
+  default = "busybox:1.37"
+}
