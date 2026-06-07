@@ -132,7 +132,7 @@ logcli query --since=15m --limit=10 '{job=~".+"}'
 | **Loki — čtení (dotazy)** | `https://task.dudkin.cz/loki/api/v1/query_range` | ALB → `/loki/*` → nginx gateway → **query-frontend** |
 | Loki — discovery labelů | `…/loki/api/v1/labels` (názvy labelů), `…/loki/api/v1/label/job/values` (hodnoty labelu `job` = zdroje logů) | ALB → `/loki/*` → nginx gateway → **query-frontend** |
 
-See [testing scenarios](test-scenarios/README.md) for more example setups and queries
+Viz [testovací scénáře](test-scenarios/README.md) pro další podporované queries a možná nastavení.
 
 > DNS jméno ALB (`loki-alb-167567352.eu-central-1.elb.amazonaws.com`) funguje
 > jen přes HTTP `:80` — ACM certifikát pokrývá pouze `task.dudkin.cz`, takže HTTPS
