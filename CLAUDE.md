@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Terraform IaC for a **Grafana Loki** logging stack on AWS, designed as a cheaper alternative to CloudWatch Logs (target: ~5 TB logs/day across ECS, EC2, Kubernetes, and non-AWS servers). This is a take-home assignment: phase 1 is the written design, phase 2 is a minimal working PoC. The design rationale, cost analysis, and requirements-to-solution mapping live in `README.md` and `docs/` (in Czech). Read `docs/deleteme.md` for the full architecture writeup before making infra decisions.
+Terraform IaC for a **Grafana Loki** logging stack on AWS, designed as a cheaper alternative to CloudWatch Logs (target: ~5 TB logs/day across ECS, EC2, Kubernetes, and non-AWS servers). This is a take-home assignment: phase 1 is the written design, phase 2 is a minimal working PoC. The design rationale, cost analysis, and requirements-to-solution mapping live in `README.md` and `docs/` (in Czech). Read `README.md` for the full architecture writeup before making infra decisions.
 
 All infrastructure is in **eu-central-1** (Frankfurt). AWS provider pinned to `~> 6.0`.
 
