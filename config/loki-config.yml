@@ -7,8 +7,8 @@
 auth_enabled: false
 
 server:
-  http_listen_port: 3100 # must match security group config
-  grpc_listen_port: 9095 # gRPC — how components call each other (MANDATORY, separate processes)
+  http_listen_port: 3100 # HTTP; dns://// must match security group config
+  grpc_listen_port: 9095 # gRPC; how components call each other (MANDATORY, separate processes)
   log_level: info
 
 common:
@@ -23,6 +23,7 @@ common:
       region: eu-central-1
       s3forcepathstyle: false # virtual-hosted-style URLs (AWS default)
   # Everyone reaches the compactor's delete API here.
+  # Must not be scaled: https://grafana.com/docs/loki/latest/operations/storage/retention/#compactor
   compactor_address: http://loki-compactor.loki.internal:3100
 
 # "dns+" resolves the name to ALL current IPs behind it (scaling-safe).
@@ -47,14 +48,16 @@ storage_config:
     cache_location: /loki/tsdb-cache # local cache of index files pulled from S3
     # queriers/ingesters ask the index-gateway service for the index (its own process now).
     index_gateway_client:
-      server_address: dns:///loki-index-gateway.loki.internal:9095
+      # Plain host:port. These gRPC client addrs use Loki's own DNS watcher,
+      # NOT dns:/// (gRPC) nor dns+ (dskit) — both are rejected here.
+      server_address: loki-index-gateway.loki.internal:9095
 
-# query-frontend hands split queries to the query-scheduler (its own service);
-# queriers (frontend_worker) pull from that same scheduler. Both = scheduler gRPC.
+# Plain host:port: the worker periodically re-resolves this to ALL scheduler
+# A records and connects to each, so it scales to >1 with no prefix needed.
 frontend:
-  scheduler_address: dns:///loki-query-scheduler.loki.internal:9095
+  scheduler_address: loki-query-scheduler.loki.internal:9095
 frontend_worker:
-  scheduler_address: dns:///loki-query-scheduler.loki.internal:9095
+  scheduler_address: loki-query-scheduler.loki.internal:9095
 
 # Single index-gateway (the loki-index-gateway service runs with -target=index-gateway).
 index_gateway:
