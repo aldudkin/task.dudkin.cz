@@ -55,7 +55,7 @@ resource "aws_ecs_task_definition" "loki-nginx-gateway" {
   network_mode             = "awsvpc" # mandatory for Fargate (own ENI/IP/SG)
   cpu                      = "256"    # strings; smallest size
   memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs.arn # pulls image, writes logs
+  execution_role_arn       = aws_iam_role.ecs.arn # pulls image, writes logs; used by ECS agent
 
   container_definitions = jsonencode([{
     name         = "loki-nginx-gateway" # service's load_balancer block references this
@@ -98,4 +98,3 @@ resource "aws_ecs_service" "loki-nginx-gateway" {
 
   depends_on = [aws_lb_listener.loki-alb-listener]
 }
-

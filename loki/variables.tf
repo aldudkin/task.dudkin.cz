@@ -32,3 +32,8 @@ variable "aws-nginx-image" {
   type    = string
   default = "nginxinc/nginx-unprivileged:1.27-alpine"
 }
+
+variable "aws-loki-image" {
+  type = string
+  default = "grafana/loki:3.7.2"
+}
