@@ -23,9 +23,24 @@ locals {
     datasources:
       - name: Loki
         type: loki
+        uid: loki
         access: proxy
         url: http://loki-query-frontend.loki.internal:3100
         isDefault: true
+  EOT
+
+  # TODO: Delete this and use AWS RDS Instead of sqlite on ephemeral ECS storage
+  # Tells Grafana to load dashboard JSON files from /shared/dashboard-files.
+  grafana_dashboard_provider_yaml = <<-EOT
+    apiVersion: 1
+    providers:
+      - name: provisioned
+        orgId: 1
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /shared/dashboard-files
   EOT
 }
 
@@ -73,11 +88,22 @@ resource "aws_ecs_task_definition" "grafana" {
   container_definitions = jsonencode([
     {
       # busybox writes the datasource provisioning file to the shared volume.
-      name        = "provision-init"
-      image       = var.busybox-image
-      essential   = false
-      command     = ["sh", "-c", "mkdir -p /shared/datasources && printf '%s' \"$DATASOURCE_YAML\" > /shared/datasources/loki.yaml"]
-      environment = [{ name = "DATASOURCE_YAML", value = local.grafana_datasource_yaml }]
+      name      = "provision-init"
+      image     = var.busybox-image
+      essential = false
+      # Write three files to the shared volume: the datasource, the dashboard
+      # provider (where to find dashboards), and the dashboard JSON itself.
+      command = ["sh", "-c", join(" && ", [
+        "mkdir -p /shared/datasources /shared/dashboards /shared/dashboard-files",
+        "printf '%s' \"$DATASOURCE_YAML\" > /shared/datasources/loki.yaml", # Configure loki datasource path
+        "printf '%s' \"$DASHBOARD_PROVIDER_YAML\" > /shared/dashboards/provider.yaml", # Setup custom .json dashboard source
+        "printf '%s' \"$DASHBOARD_JSON\" > /shared/dashboard-files/dashboard.json", # Upload custom dashboard
+      ])]
+      environment = [
+        { name = "DATASOURCE_YAML", value = local.grafana_datasource_yaml },
+        { name = "DASHBOARD_PROVIDER_YAML", value = local.grafana_dashboard_provider_yaml },
+        { name = "DASHBOARD_JSON", value = file("${path.module}/../grafana-dashboards/dashboard.json") },
+      ]
       mountPoints = [{ sourceVolume = "provisioning", containerPath = "/shared", readOnly = false }]
       logConfiguration = {
         logDriver = "awslogs"
