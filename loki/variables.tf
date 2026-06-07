@@ -34,6 +34,6 @@ variable "aws-nginx-image" {
 }
 
 variable "aws-loki-image" {
-  type = string
+  type    = string
   default = "grafana/loki:3.7.2"
 }
