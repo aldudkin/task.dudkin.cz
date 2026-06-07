@@ -15,9 +15,15 @@ resource "aws_lb_listener" "loki-alb-listener" {
   load_balancer_arn = aws_lb.loki-alb.arn
   port              = 80
   protocol          = "HTTP"
-  default_action { # Catch-all rule
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.grafana.arn
+  # Default (browser/UI traffic): upgrade to HTTPS. The /loki/* rule (priority
+  # 100) matches BEFORE this, so agents pushing over :80 are NOT redirected.
+  default_action { # "Catch-all"
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301" # permanent; preserves host/path/query by default
+    }
   }
 }
 

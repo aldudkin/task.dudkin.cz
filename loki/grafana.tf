@@ -4,6 +4,8 @@
 # so it works on first login. Admin password comes from an SSM SecureString that
 # is created OUT OF BAND -- Terraform only references its ARN, never its value.
 
+# This file was mainly written by Claude
+
 data "aws_caller_identity" "current" {}
 
 # The AWS-managed key that encrypts SSM SecureStrings (exists once any
