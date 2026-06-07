@@ -24,6 +24,16 @@ resource "aws_vpc_security_group_ingress_rule" "loki-alb-http-ingress" {
   description       = "Allow all HTTP"
 }
 
+# Grafana HTTPS entrance: :443 from the demo CIDR (browser -> ALB -> Grafana).
+resource "aws_vpc_security_group_ingress_rule" "loki-alb-https-ingress" {
+  security_group_id = aws_security_group.loki-alb.id
+  ip_protocol       = "tcp"
+  cidr_ipv4         = var.admin_cidr
+  from_port         = 443
+  to_port           = 443
+  description       = "Grafana HTTPS via ALB"
+}
+
 # An ALB only ever forwards to its targets; allow-all egress is harmless here.
 # TODO: tighten to loki-gateway:8080.
 resource "aws_vpc_security_group_egress_rule" "loki-alb-egress" {

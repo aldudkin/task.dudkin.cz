@@ -21,6 +21,20 @@ resource "aws_lb_listener" "loki-alb-listener" {
   }
 }
 
+# HTTPS for Grafana. ACM cert created out-of-band (console); we only reference its ARN.
+resource "aws_lb_listener" "grafana-https" {
+  load_balancer_arn = aws_lb.loki-alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06" # modern TLS1.2/1.3 policy
+  certificate_arn   = var.grafana_acm_certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.grafana.arn
+  }
+}
+
 resource "aws_lb_listener_rule" "loki-api" {
   listener_arn = aws_lb_listener.loki-alb-listener.arn
   priority     = 100 # The lower the number the higher the priority is

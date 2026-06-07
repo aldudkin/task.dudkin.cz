@@ -54,3 +54,10 @@ variable "grafana_admin_password_ssm_name" {
   type    = string
   default = "/loki/grafana-admin-password"
 }
+
+# ACM certificate for the Grafana HTTPS listener. Created out of band (console)
+# TODO: move to Terraform
+variable "grafana_acm_certificate_arn" {
+  type    = string
+  default = "arn:aws:acm:eu-central-1:366112400496:certificate/4e2d5142-c48d-4d91-aa45-dd61c7f6f9e8"
+}
