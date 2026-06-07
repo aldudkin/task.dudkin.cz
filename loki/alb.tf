@@ -44,6 +44,22 @@ resource "aws_lb_listener" "grafana-https" {
   }
 }
 
+# Loki API over HTTPS (same domain + cert as Grafana): agents push to
+# https://<domain>/loki/api/v1/push. Mirrors the :80 rule, on the TLS listener.
+# TODO: grafana-https is longer a suitable name for this listener
+resource "aws_lb_listener_rule" "loki-api-https" {
+  listener_arn = aws_lb_listener.grafana-https.arn
+  priority     = 100
+
+  condition {
+    path_pattern { values = ["/loki/*", "/otlp/*"] }
+  }
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.loki-nginx-gateway-target-group.arn
+  }
+}
+
 # Expose Loki API for log gathering
 resource "aws_lb_listener_rule" "loki-api" {
   listener_arn = aws_lb_listener.loki-alb-listener.arn
