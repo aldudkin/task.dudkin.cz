@@ -108,3 +108,36 @@ aws ssm put-parameter --name /loki/grafana-admin-password \
 ```shell
 aws ssm describe-parameters --region eu-central-1
 ```
+
+#### Struktura repozitáře
+
+```
+.
+├── tf-bootstrap/     # Terraform pro S3 bucket s remote state (local state, aplikuje se jednou)
+├── loki/             # Hlavní Terraform modul – veškerá infrastruktura (S3 backend)
+├── config/           # loki-config.yml – sdílená konfigurace všech Loki komponent
+├── docs/             # Návrh, analýza a zadání (task.md)
+├── mermaid/          # Diagramy architektury (.mmd: data flow, ECS/networking)
+├── test-scenarios/   # Manuální ověřovací scénáře (health, push/query, flush, externí agent)
+├── README.md         # Tento návrhový dokument
+└── CLAUDE.md         # Instrukce pro Claude Code
+```
+
+**Dva oddělené Terraform root moduly** (pořadí záleží — `tf-bootstrap/` se aplikuje první):
+
+- **`tf-bootstrap/`** — vytvoří versioned S3 bucket pro remote state ostatních modulů. Používá **local state** (vlastní `terraform.tfstate` je v gitu). Aplikuje se jednou.
+- **`loki/`** — vlastní infrastruktura. Používá **S3 backend**. Soubory jsou rozděleny podle odpovědnosti:
+
+| Soubor | Obsah |
+|---|---|
+| `provider.tf` | AWS provider + S3 backend |
+| `vpc.tf` | data zdroje pro default VPC / subnety |
+| `sg.tf` | security groups (řazené edge → core) |
+| `alb.tf` | ALB, listenery (:80 redirect → :443, :443 HTTPS), target groups, routing rules |
+| `nginx-gateway.tf` | nginx gateway (routing read/write) + jeho ECS služba |
+| `loki-components.tf` | 7 Loki komponent přes `for_each` (task def + služba + service discovery) |
+| `grafana.tf` | Grafana UI (ECS, datasource provisioning, ALB :443) |
+| `iam.tf` | IAM role (task role pro S3, execution role pro pull/logy/SSM) |
+| `s3.tf` | bucket pro chunky + TSDB index (SSE, public-access block) |
+| `ecs.tf` | ECS cluster + Cloud Map (`loki.internal`) namespace |
+| `variables.tf` | proměnné (image tagy, region, CIDR, ARN certifikátu…) |
