@@ -119,7 +119,7 @@ Vše prochází jedním **Application Load Balancerem**. Doména **`task.dudkin.
 (ACM certifikát) míří na ALB; listener `:80` přesměrovává na `:443`, na `:443`
 pravidlo cesty `/loki/*` směruje na Loki, vše ostatní na Grafanu.
 
-###### Run a test querry (no auth, no firewall):
+###### Run a test query (no auth, no firewall):
 ```shell
 export LOKI_ADDR=https://task.dudkin.cz
 logcli query --since=15m --limit=10 '{job=~".+"}'
@@ -132,7 +132,7 @@ logcli query --since=15m --limit=10 '{job=~".+"}'
 | **Loki — čtení (dotazy)** | `https://task.dudkin.cz/loki/api/v1/query_range` | ALB → `/loki/*` → nginx gateway → **query-frontend** |
 | Loki — discovery labelů | `…/loki/api/v1/labels` (názvy labelů), `…/loki/api/v1/label/job/values` (hodnoty labelu `job` = zdroje logů) | ALB → `/loki/*` → nginx gateway → **query-frontend** |
 
-See [testing scenarios](test-scenarios/README.md) for more example setups and querries
+See [testing scenarios](test-scenarios/README.md) for more example setups and queries
 
 > DNS jméno ALB (`loki-alb-167567352.eu-central-1.elb.amazonaws.com`) funguje
 > jen přes HTTP `:80` — ACM certifikát pokrývá pouze `task.dudkin.cz`, takže HTTPS
@@ -145,6 +145,7 @@ See [testing scenarios](test-scenarios/README.md) for more example setups and qu
 ├── tf-bootstrap/     # Terraform pro S3 bucket s remote state (local state, aplikuje se jednou)
 ├── loki/             # Hlavní Terraform modul – veškerá infrastruktura (S3 backend)
 ├── config/           # loki-config.yml – sdílená konfigurace všech Loki komponent
+├── grafana-dashboards/ # dashboard.json – dashboard config do Grafany
 ├── docs/             # zadání (task.md)
 ├── mermaid/          # Diagramy architektury (.mmd: data flow, ECS/networking)
 ├── test-scenarios/   # Manuální ověřovací scénáře (health, push/query, flush, externí agent)
@@ -166,6 +167,7 @@ See [testing scenarios](test-scenarios/README.md) for more example setups and qu
 | `nginx-gateway.tf` | nginx gateway (routing read/write) + jeho ECS služba |
 | `loki-components.tf` | 7 Loki komponent přes `for_each` (task def + služba + service discovery) |
 | `grafana.tf` | Grafana UI (ECS, datasource provisioning, ALB :443) |
+| `firelens-demo.tf` | Demo sběru logů z ECS přes AWS FireLens (Fluent Bit sidecar → distributor) |
 | `iam.tf` | IAM role (task role pro S3, execution role pro pull/logy/SSM) |
 | `s3.tf` | bucket pro chunky + TSDB index (SSE, public-access block) |
 | `ecs.tf` | ECS cluster + Cloud Map (`loki.internal`) namespace |

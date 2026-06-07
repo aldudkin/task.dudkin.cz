@@ -13,7 +13,7 @@ All infrastructure is in **eu-central-1** (Frankfurt). AWS provider pinned to `~
 Order matters — `tf-bootstrap/` must be applied before `loki/` can init its backend.
 
 - **`tf-bootstrap/`** — Creates the versioned S3 bucket (`terraform-state-0sl22y554u`) that holds remote state for everything else. Uses **local state** (its own `terraform.tfstate` is committed). Apply once, rarely touched.
-- **`loki/`** — The actual Loki infrastructure (currently the S3 bucket for chunks + TSDB index). Uses the **S3 backend** (`backend "s3"` in `loki/provider.tf`) with `use_lockfile = true` for state locking. This is where ongoing work happens.
+- **`loki/`** — The actual Loki infrastructure. Uses the **S3 backend** (`backend "s3"` in `loki/provider.tf`) with `use_lockfile = true` for state locking. This is where ongoing work happens.
 
 Each directory is an independent Terraform working directory — `terraform init/plan/apply` must be run from inside the relevant one.
 

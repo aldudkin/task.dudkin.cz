@@ -2,16 +2,16 @@
 %% Resources: aws_ecs_cluster (ecs.tf) + aws_cloudwatch_log_group + aws_ecs_task_definition + aws_ecs_service
 flowchart TB
     DH["Docker Hub<br/>nginxinc/nginx-unprivileged:1.27-alpine"]
-    TG["ALB target group<br/>loki-gateway-target-group :8080<br/>(from alb.tf)"]
-    CW["CloudWatch Log Group<br/>/ecs/loki-gateway (7d)"]
+    TG["ALB target group<br/>loki-nginx-gateway-target-group :8080<br/>(from alb.tf)"]
+    CW["CloudWatch Log Group<br/>/ecs/loki-nginx-gateway (7d)"]
     DNS["VPC DNS resolver<br/>169.254.169.253"]
 
     subgraph CLUSTER["aws_ecs_cluster: loki-grafana"]
         subgraph SVC["aws_ecs_service: loki-nginx-gateway — launch_type FARGATE, desired_count 1"]
-            TD["aws_ecs_task_definition: loki-gateway<br/>cpu 256 / mem 512 · network_mode awsvpc<br/>execution_role_arn = ecs (pull image + logs)"]
+            TD["aws_ecs_task_definition: loki-nginx-gateway<br/>cpu 256 / mem 512 · network_mode awsvpc<br/>execution_role_arn = ecs (pull image + logs)"]
             subgraph TASK["Fargate task (awsvpc) = its own ENI"]
-                ENI["ENI<br/>private IP + public IP (assign_public_ip=true)<br/>SG: loki-gateway"]
-                CON["container 'gateway'<br/>nginx listen :8080<br/>writes conf from $NGINX_CONF"]
+                ENI["ENI<br/>private IP + public IP (assign_public_ip=true)<br/>SG: loki-nginx-gateway"]
+                CON["container 'loki-nginx-gateway'<br/>nginx listen :8080<br/>writes conf from $NGINX_CONF"]
             end
         end
     end
@@ -22,7 +22,7 @@ flowchart TB
         AZC["subnet eu-central-1c"]
     end
 
-    UP["upstreams (not deployed yet)<br/>loki-distributor.loki.internal:3100<br/>loki-query-frontend.loki.internal:3100"]
+    UP["upstreams (Loki components)<br/>loki-distributor.loki.internal:3100<br/>loki-query-frontend.loki.internal:3100"]
 
     TD -->|"blueprint for"| CON
     CON --- ENI
@@ -33,7 +33,7 @@ flowchart TB
     SVC -->|"registers task IP :8080"| TG
 
     CON -->|"resolve *.loki.internal :53"| DNS
-    CON -->|"proxy :3100 (502 until they exist)"| UP
+    CON -->|"proxy :3100 (re-resolved per request)"| UP
 
     classDef ext fill:#fff4e5,stroke:#e8920c;
     classDef net fill:#e8f0fe,stroke:#4285f4;

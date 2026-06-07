@@ -1,6 +1,7 @@
 %% Loki on ECS Fargate — security-group boundaries + data flow
-%% Entry: ALB (HTTP :80) -> nginx gateway (:8080) -> components (:3100)
-%% Source of truth: config/loki-config.yml, loki/sg.tf
+%% Entry: ALB (:80 → 301 redirect to :443 HTTPS, ACM cert for task.dudkin.cz)
+%%        /loki/* → nginx gateway (:8080) → components (:3100); default → Grafana (:3000)
+%% Source of truth: config/loki-config.yml, loki/sg.tf, loki/alb.tf, loki/grafana.tf
 %% Ports: 3100 = client-facing + internal HTTP | 9095 = inter-component gRPC | 7946 = memberlist gossip (TCP+UDP)
 flowchart TB
     %% ===== Outside AWS / public =====
@@ -9,14 +10,14 @@ flowchart TB
         DEV["Developer browser<br/>(Grafana UI)"]
     end
 
-    %% ===== SG: loki-alb (NEW) =====
-    subgraph SGALB["SG: loki-alb (NEW)"]
-        ALB["Application Load Balancer<br/>HTTP listener :80<br/>(TLS = prod follow-up, needs domain)"]
+    %% ===== SG: loki-alb =====
+    subgraph SGALB["SG: loki-alb"]
+        ALB["Application Load Balancer<br/>:80 → 301 redirect to :443<br/>:443 HTTPS (ACM, task.dudkin.cz)"]
     end
 
     %% ===== SG: grafana =====
     subgraph SGGRAF["SG: grafana"]
-        GRAF["Grafana task<br/>:80 (LogQL UI)"]
+        GRAF["Grafana task<br/>:3000 (LogQL UI)"]
     end
 
     %% ===== SG: loki-gateway =====
@@ -38,18 +39,19 @@ flowchart TB
     S3[("Amazon S3<br/>chunks + TSDB index")]
 
     %% ----- entry: agents + dev -----
-    AG -->|"POST /push :80"| ALB
-    DEV -->|":80 (direct, admin_cidr)"| GRAF
+    AG -->|"POST /loki/api/v1/push (:80 or :443)"| ALB
+    DEV -->|"HTTPS :443"| ALB
 
-    %% ----- ALB -> gateway (NEW rules) -----
-    ALB -->|":8080 — NEW: gw ingress from alb"| GW
+    %% ----- ALB routing rules -----
+    ALB -->|"/loki/* → :8080"| GW
+    ALB -->|"default → :3000"| GRAF
 
-    %% ----- Grafana -> gateway (existing rule) -----
-    GRAF -->|":8080 — existing rule"| GW
+    %% ----- Grafana reads query-frontend DIRECTLY (not via gateway) -----
+    GRAF -->|"read :3100 (datasource url)"| QF
 
-    %% ----- gateway -> components (NEW rules) -----
-    GW -->|"write :3100 — NEW: internal ingress from gw"| DIST
-    GW -->|"read :3100 — NEW: internal ingress from gw"| QF
+    %% ----- gateway -> components -----
+    GW -->|"write :3100"| DIST
+    GW -->|"read :3100"| QF
 
     %% ----- internal mesh (self-rule, already covered) -----
     DIST -->|"gRPC :9095"| ING
@@ -66,7 +68,5 @@ flowchart TB
 
     classDef nw fill:#fff4e5,stroke:#e8920c;
     classDef s3 fill:#e8f0fe,stroke:#4285f4;
-    classDef newsg fill:#e6f4ea,stroke:#34a853;
     class AG,DEV nw;
     class S3 s3;
-    class ALB newsg;
