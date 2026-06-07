@@ -119,6 +119,12 @@ Vše prochází jedním **Application Load Balancerem**. Doména **`task.dudkin.
 (ACM certifikát) míří na ALB; listener `:80` přesměrovává na `:443`, na `:443`
 pravidlo cesty `/loki/*` směruje na Loki, vše ostatní na Grafanu.
 
+###### Run a test querry (no auth, no firewall):
+```shell
+export LOKI_ADDR=https://task.dudkin.cz
+logcli query --since=15m --limit=10 '{job=~".+"}'
+```
+
 | Účel | URL | Routing |
 |---|---|---|
 | **Grafana UI** | `https://task.dudkin.cz` | ALB :443 default → Grafana |
@@ -126,10 +132,7 @@ pravidlo cesty `/loki/*` směruje na Loki, vše ostatní na Grafanu.
 | **Loki — čtení (dotazy)** | `https://task.dudkin.cz/loki/api/v1/query_range` | ALB → `/loki/*` → nginx gateway → **query-frontend** |
 | Loki — discovery labelů | `…/loki/api/v1/labels` (názvy labelů), `…/loki/api/v1/label/job/values` (hodnoty labelu `job` = zdroje logů) | ALB → `/loki/*` → nginx gateway → **query-frontend** |
 
-```shell
-# logcli
-export LOKI_ADDR=https://task.dudkin.cz
-```
+See [testing scenarios](test-scenarios/README.md) for more example setups and querries
 
 > DNS jméno ALB (`loki-alb-167567352.eu-central-1.elb.amazonaws.com`) funguje
 > jen přes HTTP `:80` — ACM certifikát pokrývá pouze `task.dudkin.cz`, takže HTTPS
