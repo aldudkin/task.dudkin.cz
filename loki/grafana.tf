@@ -95,9 +95,9 @@ resource "aws_ecs_task_definition" "grafana" {
       # provider (where to find dashboards), and the dashboard JSON itself.
       command = ["sh", "-c", join(" && ", [
         "mkdir -p /shared/datasources /shared/dashboards /shared/dashboard-files",
-        "printf '%s' \"$DATASOURCE_YAML\" > /shared/datasources/loki.yaml", # Configure loki datasource path
+        "printf '%s' \"$DATASOURCE_YAML\" > /shared/datasources/loki.yaml",            # Configure loki datasource path
         "printf '%s' \"$DASHBOARD_PROVIDER_YAML\" > /shared/dashboards/provider.yaml", # Setup custom .json dashboard source
-        "printf '%s' \"$DASHBOARD_JSON\" > /shared/dashboard-files/dashboard.json", # Upload custom dashboard
+        "printf '%s' \"$DASHBOARD_JSON\" > /shared/dashboard-files/dashboard.json",    # Upload custom dashboard
       ])]
       environment = [
         { name = "DATASOURCE_YAML", value = local.grafana_datasource_yaml },

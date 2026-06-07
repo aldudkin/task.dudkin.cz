@@ -113,7 +113,7 @@ resource "aws_ecs_service" "loki" {
   network_configuration {
     subnets         = data.aws_subnets.default.ids
     security_groups = [aws_security_group.loki-internal.id]
-    # TODO: private subnets + NAT gatewayin VPC; public IP is only to reach Docker Hub.
+    # TODO: private subnets + NAT gateway in VPC; public IP is only to reach Docker Hub.
     assign_public_ip = true
   }
 
